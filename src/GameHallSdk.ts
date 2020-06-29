@@ -1,4 +1,4 @@
-// import * as JSZip from "JSZip";
+import * as JSZip from "JSZip";
 
 namespace GameHallSdk {
     export const jszip = null;
@@ -118,21 +118,21 @@ namespace GameHallSdk {
                 jsFileNum += Object.keys(codeZip.js).length
                 if (codeZip.execAfterLoaded == null) codeZip.execAfterLoaded = true;
             });
-            this.res.unZipProgress.total = jsFileNum; 
+            this.res.unZipProgress.total = jsFileNum;
         }
 
-        startDownload(downloadProgress: Function, unzipProgress: Function) {
+        startDownload(downloadProgress: Function, unzipProgress: Function, onloadedCompleted: Function) {
             let downloadArr = [];
             this.res.codeZips.map(codeZip => {
                 downloadArr.push(this.download(codeZip, downloadProgress, unzipProgress));
             });
             Promise.all(downloadArr).then(res => {
-                // debugger
+               if (onloadedCompleted) onloadedCompleted();
             });
         }
 
         executeCode(url: string, code: string) {
-            console.log("loaded:", url);
+            console.log("exec:", url);
             let script = document.createElement('script');
             script.type = 'text/javascript';
             script.text = code;
@@ -150,7 +150,7 @@ namespace GameHallSdk {
                 xhr.onreadystatechange = () => {
                     if (xhr.readyState === 4) {
                         if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304) {
-                            console.log("下载完成：" + codeZip)
+
                             let zipBuffer = xhr.response;
                             let promiseArr = [];
                             JSZip.loadAsync(zipBuffer).then(zipFile => {
@@ -177,9 +177,8 @@ namespace GameHallSdk {
                                     if (codeZip.execAfterLoaded) {
                                         for (const url in codeZip.js) {
                                             if (codeZip.js.hasOwnProperty(url)) {
-                                                console.count("fuck");
                                                 const code = codeZip.js[url];
-                                                this.executeCode(codeZip.url, "console.log('x');");
+                                                this.executeCode(url, code);
                                             }
                                         }
                                     }
@@ -204,8 +203,7 @@ namespace GameHallSdk {
                         this.res.downloadProgress.cur += codeZip.progress;
                     });
                     this.res.downloadProgress.totalProgrss = this.res.downloadProgress.cur / this.res.downloadProgress.total;
-                    console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
-                    // window.updateTipTxt("游戏正在加载中..." + progress + "%");
+                    // console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
                     if (downloadProgress) downloadProgress(this.res.downloadProgress.totalProgrss);
                 };
                 xhr.send();
@@ -214,32 +212,4 @@ namespace GameHallSdk {
     }
 }
 (window as any).GameHallSdk = GameHallSdk;
-GameHallSdk.Tool.isMatchGame();
-let res = [
-    {
-    url: "http://gamehall.xuhuiqp.com/hall/libs-20200627.zip",
-    js: {
-        "libs/laya-6bb4eed969.core.js": "",
-        "libs/laya-ee83f7080f.ani.js": "",
-        "libs/laya-eb46760c69.html.js": "",
-        "libs/laya-2ee36440bf.ui.js": "",
-        "libs/third/fairygui-dac55db5d9.js": "",
-        "libs/third/puremvc-typescript-standard-1-8f0acf0b1b.0.js": "",
-    }
-},
-//  {
-//     url: "http://gamehall.xuhuiqp.com/hall/js-20200627.zip",
-//     js: {
-//         "js/config-80692e1236.js": "",
-//         "js/bundle-58123d2252.js": ""
-//     }
-// },
-]
-let test = new GameHallSdk.ZipCodeLoader(res);
-test.startDownload((progress => {
-    console.log("下载进度:", progress);
-    document.body.innerText = "下载进度:" + progress;
-}), (pro => {
-    console.log("解压进度:", pro)
-}))
 

@@ -1,4 +1,6 @@
-// import * as JSZip from "JSZip";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const JSZip = require("JSZip");
 var GameHallSdk;
 (function (GameHallSdk) {
     GameHallSdk.jszip = null;
@@ -98,7 +100,7 @@ var GameHallSdk;
             });
         }
         executeCode(url, code) {
-            console.log("loaded:", url);
+            console.log("exec:", url);
             let script = document.createElement('script');
             script.type = 'text/javascript';
             script.text = code;
@@ -115,7 +117,6 @@ var GameHallSdk;
                 xhr.onreadystatechange = () => {
                     if (xhr.readyState === 4) {
                         if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304) {
-                            console.log("下载完成：" + codeZip);
                             let zipBuffer = xhr.response;
                             let promiseArr = [];
                             JSZip.loadAsync(zipBuffer).then(zipFile => {
@@ -143,9 +144,8 @@ var GameHallSdk;
                                     if (codeZip.execAfterLoaded) {
                                         for (const url in codeZip.js) {
                                             if (codeZip.js.hasOwnProperty(url)) {
-                                                console.count("fuck");
                                                 const code = codeZip.js[url];
-                                                this.executeCode(codeZip.url, "console.log('x');");
+                                                this.executeCode(url, code);
                                             }
                                         }
                                     }
@@ -181,25 +181,4 @@ var GameHallSdk;
     GameHallSdk.ZipCodeLoader = ZipCodeLoader;
 })(GameHallSdk || (GameHallSdk = {}));
 window.GameHallSdk = GameHallSdk;
-GameHallSdk.Tool.isMatchGame();
-let res = [
-    {
-        url: "http://gamehall.xuhuiqp.com/hall/libs-20200627.zip",
-        js: {
-            "libs/laya-6bb4eed969.core.js": "",
-            "libs/laya-ee83f7080f.ani.js": "",
-            "libs/laya-eb46760c69.html.js": "",
-            "libs/laya-2ee36440bf.ui.js": "",
-            "libs/third/fairygui-dac55db5d9.js": "",
-            "libs/third/puremvc-typescript-standard-1-8f0acf0b1b.0.js": "",
-        }
-    },
-];
-let test = new GameHallSdk.ZipCodeLoader(res);
-test.startDownload((progress => {
-    console.log("下载进度:", progress);
-    document.body.innerText = "下载进度:" + progress;
-}), (pro => {
-    console.log("解压进度:", pro);
-}));
 //# sourceMappingURL=GameHallSdk.js.map
