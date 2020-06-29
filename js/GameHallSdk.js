@@ -1,8 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+// import * as JSZip from "JSZip";
 var GameHallSdk;
 (function (GameHallSdk) {
-    // export const jszip = JSZip;
+    GameHallSdk.jszip = null;
     //静态工具类
     class Tool {
         /**
@@ -64,7 +63,143 @@ var GameHallSdk;
         }
     }
     GameHallSdk.Tool = Tool;
+    class ZipCodeLoader {
+        constructor(codeZips) {
+            this.res = {
+                downloadProgress: {
+                    cur: 0,
+                    total: 0,
+                    totalProgrss: 0
+                },
+                unZipProgress: {
+                    completed: 0,
+                    total: 0,
+                },
+                codeZips: codeZips
+            };
+            this.res.downloadProgress.total = this.res.codeZips.length;
+            let jsFileNum = 0;
+            this.res.codeZips.map(codeZip => {
+                if (codeZip.js == null)
+                    codeZip.js = {};
+                jsFileNum += Object.keys(codeZip.js).length;
+                if (codeZip.execAfterLoaded == null)
+                    codeZip.execAfterLoaded = true;
+            });
+            this.res.unZipProgress.total = jsFileNum;
+        }
+        startDownload(downloadProgress, unzipProgress) {
+            let downloadArr = [];
+            this.res.codeZips.map(codeZip => {
+                downloadArr.push(this.download(codeZip, downloadProgress, unzipProgress));
+            });
+            Promise.all(downloadArr).then(res => {
+                // debugger
+            });
+        }
+        executeCode(url, code) {
+            console.log("loaded:", url);
+            let script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.text = code;
+            script.async = false;
+            document.body.appendChild(script);
+            //用完就删
+            // document.body.removeChild(script);
+        }
+        download(codeZip, downloadProgress, unzipProgress) {
+            return new Promise((resovle, reject) => {
+                let xhr = new XMLHttpRequest();
+                xhr.open('GET', codeZip.url, true);
+                xhr.responseType = 'arraybuffer';
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304) {
+                            console.log("下载完成：" + codeZip);
+                            let zipBuffer = xhr.response;
+                            let promiseArr = [];
+                            JSZip.loadAsync(zipBuffer).then(zipFile => {
+                                for (const url in codeZip.js) {
+                                    if (codeZip.js.hasOwnProperty(url)) {
+                                        const file = zipFile.files[url];
+                                        if (!file) {
+                                            throw "zip包中不包含指定文件:" + url;
+                                        }
+                                        let promise = file.async("text").then(code => {
+                                            codeZip.js[url] = code;
+                                            this.res.unZipProgress.completed++;
+                                            if (unzipProgress)
+                                                unzipProgress(this.res.unZipProgress);
+                                            return Promise.resolve();
+                                        }, err => {
+                                            console.error("从zip解析code失败 code url", url, "err", err);
+                                            return Promise.reject(err);
+                                        });
+                                        promiseArr.push(promise);
+                                    }
+                                }
+                                Promise.all(promiseArr).then(() => {
+                                    // debugger
+                                    if (codeZip.execAfterLoaded) {
+                                        for (const url in codeZip.js) {
+                                            if (codeZip.js.hasOwnProperty(url)) {
+                                                console.count("fuck");
+                                                const code = codeZip.js[url];
+                                                this.executeCode(codeZip.url, "console.log('x');");
+                                            }
+                                        }
+                                    }
+                                    return resovle(codeZip.js);
+                                }, err => {
+                                    console.log(err);
+                                    return reject(err);
+                                });
+                            }, err => {
+                                console.error("加载代码zip包出错", err);
+                                return reject(err);
+                            });
+                        }
+                    }
+                };
+                xhr.onprogress = (e) => {
+                    let pro = e.loaded / e.total;
+                    codeZip.progress = pro;
+                    this.res.downloadProgress.cur = 0;
+                    this.res.codeZips.map(codeZip => {
+                        this.res.downloadProgress.cur += codeZip.progress;
+                    });
+                    this.res.downloadProgress.totalProgrss = this.res.downloadProgress.cur / this.res.downloadProgress.total;
+                    console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
+                    // window.updateTipTxt("游戏正在加载中..." + progress + "%");
+                    if (downloadProgress)
+                        downloadProgress(this.res.downloadProgress.totalProgrss);
+                };
+                xhr.send();
+            });
+        }
+    }
+    GameHallSdk.ZipCodeLoader = ZipCodeLoader;
 })(GameHallSdk || (GameHallSdk = {}));
 window.GameHallSdk = GameHallSdk;
 GameHallSdk.Tool.isMatchGame();
+let res = [
+    {
+        url: "http://gamehall.xuhuiqp.com/hall/libs-20200627.zip",
+        js: {
+            "libs/laya-6bb4eed969.core.js": "",
+            "libs/laya-ee83f7080f.ani.js": "",
+            "libs/laya-eb46760c69.html.js": "",
+            "libs/laya-2ee36440bf.ui.js": "",
+            "libs/third/fairygui-dac55db5d9.js": "",
+            "libs/third/puremvc-typescript-standard-1-8f0acf0b1b.0.js": "",
+        }
+    },
+];
+let test = new GameHallSdk.ZipCodeLoader(res);
+test.startDownload((progress => {
+    console.log("下载进度:", progress);
+    document.body.innerText = "下载进度:" + progress;
+}), (pro => {
+    console.log("解压进度:", pro);
+}));
 //# sourceMappingURL=GameHallSdk.js.map
