@@ -213,8 +213,17 @@ var GameHallSdk;
                 downloadArr.push(this.download(codeZip, downloadProgress, unzipProgress));
             });
             Promise.all(downloadArr).then(res => {
+                let codeMap = new Map();
+                res.map(jsObj => {
+                    for (const key in jsObj) {
+                        if (jsObj.hasOwnProperty(key)) {
+                            const code = jsObj[key];
+                            codeMap.set(key, code);
+                        }
+                    }
+                });
                 if (onloadedCompleted)
-                    onloadedCompleted();
+                    onloadedCompleted(codeMap);
             });
         }
         executeCode(url, code) {
@@ -298,6 +307,40 @@ var GameHallSdk;
     GameHallSdk.ZipCodeLoader = ZipCodeLoader;
 })(GameHallSdk || (GameHallSdk = {}));
 window.GameHallSdk = GameHallSdk;
+let res = [
+    {
+        url: "http://192.168.111.88:8900/bin/libs.zip",
+        js: {
+            "libs/laya.core.js": "",
+            "libs/laya.ani.js": "",
+            "libs/laya.html.js": "",
+            "libs/laya.ui.js": "",
+            "libs/third/fairygui.js": "",
+            "libs/third/puremvc-typescript-multicore-1.1.js": "",
+        },
+        execAfterLoaded: false,
+    },
+    {
+        url: "http://192.168.111.88:8900/bin/js.zip",
+        js: {
+            "js/config.js": "",
+            "js/bundle.js": ""
+        },
+        execAfterLoaded: false,
+    },
+];
+// let test = new GameHallSdk.ZipCodeLoader(res);
+// test.startDownload((progress => {
+//     console.log("下载进度:", progress);
+// }), (pro => {
+//     console.log("解压进度:", pro);
+//     // window.updateTipTxt("解压脚本文件..." + this.unZipProgress.completedNum + "/" + this.unZipProgress.fileNum);
+// }), (codeMap: Map<string, string>) => {
+//     console.log("代码加载完毕,可以执行代码了");
+//     codeMap.forEach((code: string, url: string) => { 
+//         test.executeCode(url, code);
+//     });
+// })
 
 
 /***/ }),
