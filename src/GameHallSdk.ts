@@ -1,7 +1,7 @@
 import * as JSZip from "JSZip";
 
 namespace GameHallSdk {
-    export const jszip = null;
+    export const jszip = JSZip;
     //静态工具类
     export class Tool {
 
@@ -21,7 +21,7 @@ namespace GameHallSdk {
          * @static
          * @memberof Tool
          */
-        static getMatchGameMutitype() {
+        static getMatchMultipleType() {
 
         }
 
@@ -34,7 +34,9 @@ namespace GameHallSdk {
          * @memberof Tool
          */
         static appendSearchParam(key: string, value: string) {
-            let url = new URL(window.location.href);
+            let url = new URL(location.href);
+            url.searchParams.append(key, value);
+            history.replaceState([], '', url.href);;
         }
 
 
@@ -46,7 +48,11 @@ namespace GameHallSdk {
          * @memberof Tool
          */
         static deleteSearchParam(key: string) {
-
+            let url = new URL(location.href);
+            if (url.searchParams.has(key)) {
+                url.searchParams.delete(key);
+                history.replaceState([], '', url.href);
+            }
         }
 
 
@@ -58,7 +64,10 @@ namespace GameHallSdk {
          * @memberof Tool
          */
         static loadJs(url: string): void {
-
+            let script = document.createElement("script");
+            script.async = false;
+            script.src = url;
+            document.body.appendChild(script);
         }
 
         /**
@@ -210,7 +219,9 @@ namespace GameHallSdk {
                     });
                     this.res.downloadProgress.totalProgrss = this.res.downloadProgress.cur / this.res.downloadProgress.total;
                     // console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
-                    if (downloadProgress) downloadProgress(this.res.downloadProgress.totalProgrss);
+                    if(NaN != this.res.downloadProgress.totalProgrss) {
+                        if (downloadProgress) downloadProgress(this.res.downloadProgress.totalProgrss);
+                    }
                 };
                 xhr.send();
             });
@@ -218,28 +229,28 @@ namespace GameHallSdk {
     }
 }
 (window as any).GameHallSdk = GameHallSdk;
-let res = [
-    {
-        url: "http://192.168.111.88:8900/bin/libs.zip",
-        js: {
-            "libs/laya.core.js": "",
-            "libs/laya.ani.js": "",
-            "libs/laya.html.js": "",
-            "libs/laya.ui.js": "",
-            "libs/third/fairygui.js": "",
-            "libs/third/puremvc-typescript-multicore-1.1.js": "",
-        },
-        execAfterLoaded: false,
-    },
-    {
-        url: "http://192.168.111.88:8900/bin/js.zip",
-        js: {
-            "js/config.js": "",
-            "js/bundle.js": ""
-        },
-        execAfterLoaded: false,
-    },
-]
+// let res = [
+//     {
+//         url: "http://192.168.111.88:8900/bin/libs.zip",
+//         js: {
+//             "libs/laya.core.js": "",
+//             "libs/laya.ani.js": "",
+//             "libs/laya.html.js": "",
+//             "libs/laya.ui.js": "",
+//             "libs/third/fairygui.js": "",
+//             "libs/third/puremvc-typescript-multicore-1.1.js": "",
+//         },
+//         execAfterLoaded: false,
+//     },
+//     {
+//         url: "http://192.168.111.88:8900/bin/js.zip",
+//         js: {
+//             "js/config.js": "",
+//             "js/bundle.js": ""
+//         },
+//         execAfterLoaded: false,
+//     },
+// ]
 // let test = new GameHallSdk.ZipCodeLoader(res);
 // test.startDownload((progress => {
 //     console.log("下载进度:", progress);
@@ -253,3 +264,5 @@ let res = [
 //     });
 // })
 
+// let txt = "GameHallSdk" +  GameHallSdk.jszip.toString();
+// document.body.innerText = txt;
