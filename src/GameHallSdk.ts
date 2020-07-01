@@ -173,7 +173,7 @@ namespace GameHallSdk {
                                     if (codeZip.js.hasOwnProperty(url)) {
                                         const file = zipFile.files[url];
                                         if (!file) {
-                                            throw "zip包中不包含指定文件:" + url;
+                                            throw "zip包:" +codeZip.url + ", 中不包含指定文件:" + url;
                                         }
                                         let promise = file.async("text").then(code => {
                                             codeZip.js[url] = code;
