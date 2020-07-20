@@ -5,6 +5,10 @@ namespace GameHallSdk {
     //静态工具类
     export class Tool {
 
+        static changeH5Title(title: string): void {
+            window.document.title = title;
+        }
+
         /**
          * 判断是否是比赛场 通过判断查询字符串里面是否有seasonId
          *
@@ -173,7 +177,7 @@ namespace GameHallSdk {
                                     if (codeZip.js.hasOwnProperty(url)) {
                                         const file = zipFile.files[url];
                                         if (!file) {
-                                            throw "zip包:" +codeZip.url + ", 中不包含指定文件:" + url;
+                                            throw "zip包:" + codeZip.url + ", 中不包含指定文件:" + url;
                                         }
                                         let promise = file.async("text").then(code => {
                                             codeZip.js[url] = code;
@@ -219,7 +223,7 @@ namespace GameHallSdk {
                     });
                     this.res.downloadProgress.totalProgrss = this.res.downloadProgress.cur / this.res.downloadProgress.total;
                     // console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
-                    if(NaN != this.res.downloadProgress.totalProgrss) {
+                    if (NaN != this.res.downloadProgress.totalProgrss) {
                         if (downloadProgress) downloadProgress(this.res.downloadProgress.totalProgrss);
                     }
                 };

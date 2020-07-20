@@ -123,6 +123,9 @@ var GameHallSdk;
     GameHallSdk.jszip = JSZip;
     //静态工具类
     class Tool {
+        changeH5Title(title) {
+            window.document.title = title;
+        }
         /**
          * 判断是否是比赛场 通过判断查询字符串里面是否有seasonId
          *

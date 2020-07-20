@@ -3,9 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const JSZip = require("JSZip");
 var GameHallSdk;
 (function (GameHallSdk) {
-    GameHallSdk.jszip = null;
+    GameHallSdk.jszip = JSZip;
     //静态工具类
     class Tool {
+        static changeH5Title(title) {
+            window.document.title = title;
+        }
         /**
          * 判断是否是比赛场 通过判断查询字符串里面是否有seasonId
          *
@@ -21,7 +24,7 @@ var GameHallSdk;
          * @static
          * @memberof Tool
          */
-        static getMatchGameMutitype() {
+        static getMatchMultipleType() {
         }
         /**
          * 给当前url增加一个查询字符串
@@ -32,7 +35,10 @@ var GameHallSdk;
          * @memberof Tool
          */
         static appendSearchParam(key, value) {
-            let url = new URL(window.location.href);
+            let url = new URL(location.href);
+            url.searchParams.append(key, value);
+            history.replaceState([], '', url.href);
+            ;
         }
         /**
          * 从当前url删除一个☝️查询字符串
@@ -42,6 +48,11 @@ var GameHallSdk;
          * @memberof Tool
          */
         static deleteSearchParam(key) {
+            let url = new URL(location.href);
+            if (url.searchParams.has(key)) {
+                url.searchParams.delete(key);
+                history.replaceState([], '', url.href);
+            }
         }
         /**
          *
@@ -51,6 +62,10 @@ var GameHallSdk;
          * @memberof Tool
          */
         static loadJs(url) {
+            let script = document.createElement("script");
+            script.async = false;
+            script.src = url;
+            document.body.appendChild(script);
         }
         /**
          *
@@ -90,13 +105,23 @@ var GameHallSdk;
             });
             this.res.unZipProgress.total = jsFileNum;
         }
-        startDownload(downloadProgress, unzipProgress) {
+        startDownload(downloadProgress, unzipProgress, onloadedCompleted) {
             let downloadArr = [];
             this.res.codeZips.map(codeZip => {
                 downloadArr.push(this.download(codeZip, downloadProgress, unzipProgress));
             });
             Promise.all(downloadArr).then(res => {
-                // debugger
+                let codeMap = new Map();
+                res.map(jsObj => {
+                    for (const key in jsObj) {
+                        if (jsObj.hasOwnProperty(key)) {
+                            const code = jsObj[key];
+                            codeMap.set(key, code);
+                        }
+                    }
+                });
+                if (onloadedCompleted)
+                    onloadedCompleted(codeMap);
             });
         }
         executeCode(url, code) {
@@ -124,7 +149,7 @@ var GameHallSdk;
                                     if (codeZip.js.hasOwnProperty(url)) {
                                         const file = zipFile.files[url];
                                         if (!file) {
-                                            throw "zip包中不包含指定文件:" + url;
+                                            throw "zip包:" + codeZip.url + ", 中不包含指定文件:" + url;
                                         }
                                         let promise = file.async("text").then(code => {
                                             codeZip.js[url] = code;
@@ -169,10 +194,11 @@ var GameHallSdk;
                         this.res.downloadProgress.cur += codeZip.progress;
                     });
                     this.res.downloadProgress.totalProgrss = this.res.downloadProgress.cur / this.res.downloadProgress.total;
-                    console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
-                    // window.updateTipTxt("游戏正在加载中..." + progress + "%");
-                    if (downloadProgress)
-                        downloadProgress(this.res.downloadProgress.totalProgrss);
+                    // console.log("zip总加载进度：", this.res.downloadProgress.totalProgrss);
+                    if (NaN != this.res.downloadProgress.totalProgrss) {
+                        if (downloadProgress)
+                            downloadProgress(this.res.downloadProgress.totalProgrss);
+                    }
                 };
                 xhr.send();
             });
@@ -181,4 +207,40 @@ var GameHallSdk;
     GameHallSdk.ZipCodeLoader = ZipCodeLoader;
 })(GameHallSdk || (GameHallSdk = {}));
 window.GameHallSdk = GameHallSdk;
+// let res = [
+//     {
+//         url: "http://192.168.111.88:8900/bin/libs.zip",
+//         js: {
+//             "libs/laya.core.js": "",
+//             "libs/laya.ani.js": "",
+//             "libs/laya.html.js": "",
+//             "libs/laya.ui.js": "",
+//             "libs/third/fairygui.js": "",
+//             "libs/third/puremvc-typescript-multicore-1.1.js": "",
+//         },
+//         execAfterLoaded: false,
+//     },
+//     {
+//         url: "http://192.168.111.88:8900/bin/js.zip",
+//         js: {
+//             "js/config.js": "",
+//             "js/bundle.js": ""
+//         },
+//         execAfterLoaded: false,
+//     },
+// ]
+// let test = new GameHallSdk.ZipCodeLoader(res);
+// test.startDownload((progress => {
+//     console.log("下载进度:", progress);
+// }), (pro => {
+//     console.log("解压进度:", pro);
+//     // window.updateTipTxt("解压脚本文件..." + this.unZipProgress.completedNum + "/" + this.unZipProgress.fileNum);
+// }), (codeMap: Map<string, string>) => {
+//     console.log("代码加载完毕,可以执行代码了");
+//     codeMap.forEach((code: string, url: string) => { 
+//         test.executeCode(url, code);
+//     });
+// })
+// let txt = "GameHallSdk" +  GameHallSdk.jszip.toString();
+// document.body.innerText = txt;
 //# sourceMappingURL=GameHallSdk.js.map
