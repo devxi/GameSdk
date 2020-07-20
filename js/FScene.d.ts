@@ -216,3 +216,70 @@ declare namespace LQ {
         function logDebugTimeEnd(label?: any): void;
     }
 }
+declare namespace LQ {
+    /**
+     * fgui弹窗
+     */
+    class FWindow extends fairygui.Window {
+        static root: fairygui.GRoot;
+        beforeOpenResources: any[];
+        afterOpenResources: any[];
+        className: String;
+        layerName: string;
+        closeBtn: fairygui.GComponent;
+        winDefine: IWinDefine;
+        /**
+         *
+         * window组件的所有子节点映射
+         * @type
+         * @memberof FWindow
+         */
+        children: {
+            [key: string]: fairygui.GComponent;
+        };
+        classRef?: Function;
+        /**
+         * 控制器集合
+         *
+         * @type {{ [key: string]: fairygui.Controller }}
+         * @memberof FWindow
+         */
+        cc: {
+            [key: string]: fairygui.Controller;
+        };
+        static Init(): void;
+        constructor(windowName?: string);
+        /**
+         *
+         * 点击窗体外部是否触发关闭窗体 默认为 true
+         * @type {boolean}
+         * @memberof FWindow
+         */
+        closeOnClickOutSide: boolean;
+        pkgPath?: string;
+        componentName?: string;
+        onInit(): void;
+        /**
+         * data参数会传递给onOpen方法
+         *
+         * @param {*} [data] 传递给弹窗的参数
+         * @memberof FWindow
+         */
+        popup(data?: any): FWindow;
+        private __onOpened;
+        onOpened(data?: any): void;
+        beforeOpenNeedLoad(): Promise<any>;
+        afterOpenNeedLoad(): void;
+        protected onShown(): void;
+        protected onHide(): void;
+        close(type?: string): void;
+        onClosed(type?: string): void;
+        protected doShowAnimation(): void;
+        protected doHideAnimation(): void;
+        protected onClickChild(childName: string, thisObj: any, func: Function, args?: any[]): FWindow;
+        private bulidChildMap;
+        private buidControllerMap;
+        protected static popup(win: FWindow, param?: any, complete?: Laya.Handler): void;
+        protected static onLoaded(win: FWindow, param?: any): Promise<void>;
+    }
+}

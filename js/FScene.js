@@ -275,4 +275,149 @@ var LQ;
         Debug.logDebugTimeEnd = logDebugTimeEnd;
     })(Debug = LQ.Debug || (LQ.Debug = {}));
 })(LQ || (LQ = {}));
+(function (LQ) {
+    /**
+     * fgui弹窗
+     */
+    class FWindow extends fairygui.Window {
+        constructor(windowName) {
+            super();
+            this.beforeOpenResources = [];
+            this.afterOpenResources = [];
+            /**
+             *
+             * window组件的所有子节点映射
+             * @type
+             * @memberof FWindow
+             */
+            this.children = {};
+            /**
+             * 控制器集合
+             *
+             * @type {{ [key: string]: fairygui.Controller }}
+             * @memberof FWindow
+             */
+            this.cc = {};
+            /**
+             *
+             * 点击窗体外部是否触发关闭窗体 默认为 true
+             * @type {boolean}
+             * @memberof FWindow
+             */
+            this.closeOnClickOutSide = true;
+            this.layerName = windowName;
+            this.onInit();
+        }
+        static Init() {
+            fairygui.UIConfig.modalLayerColor = "rgba(33,33,33,0.5)";
+            // Laya.stage.on(Laya.Event.RESIZE, this , this.onStageResize)
+            FWindow.root = new fgui.GRoot();
+            FWindow.root.displayObject.zOrder = 999;
+            FWindow.root.setSize(Laya.stage.width, Laya.stage.height);
+            FWindow.root.displayObject.name = "FWindow弹窗层";
+            Laya.stage.addChild(FWindow.root.displayObject);
+        }
+        onInit() {
+            this.className = FWindow.name;
+            this.setPivot(0.5, 0.5);
+            this.modal = true;
+            this._displayObject.name = "FWindow";
+        }
+        /**
+         * data参数会传递给onOpen方法
+         *
+         * @param {*} [data] 传递给弹窗的参数
+         * @memberof FWindow
+         */
+        popup(data) {
+            FWindow.popup(this, data);
+            return this;
+        }
+        __onOpened(param) {
+            this.bulidChildMap();
+            this.buidControllerMap();
+            this.onOpened(param);
+            this.afterOpenNeedLoad();
+        }
+        onOpened(data) { }
+        beforeOpenNeedLoad() {
+            return Promise.resolve();
+        }
+        afterOpenNeedLoad() {
+        }
+        onShown() { }
+        onHide() {
+            LQ.Debug.logDebug("onHide");
+        }
+        close(type) {
+            this.hide();
+            this.onClosed(type);
+        }
+        onClosed(type) {
+        }
+        doShowAnimation() {
+            Laya.Tween.from(this, {
+                scaleX: 0,
+                scaleY: 0
+            }, 300, Laya.Ease.backOut, Laya.Handler.create(this, this.onShown, [this]), 0, false, false);
+        }
+        doHideAnimation() {
+            Laya.Tween.to(this, {
+                scaleX: 0,
+                scaleY: 0
+            }, 300, Laya.Ease.strongOut, Laya.Handler.create(this, this.hideImmediately, [this]), 0, false, false);
+        }
+        onClickChild(childName, thisObj, func, args) {
+            this.children[childName].onClick(thisObj, func, args);
+            return this;
+        }
+        bulidChildMap() {
+            if (this._children[0]) {
+                this._children[0].asCom._children.forEach((child) => {
+                    this.children[child.name] = child;
+                });
+            }
+        }
+        buidControllerMap() {
+            this.controllers.forEach((cc) => {
+                this.cc[cc.name] = cc;
+            });
+            this.contentPane.controllers.forEach((cc) => {
+                this.cc[cc.name] = cc;
+            });
+        }
+        static popup(win, param, complete) {
+            if (win.winDefine) {
+                if (win.winDefine.pkgPath && win.winDefine.componentName) {
+                    fairygui.UIPackage.loadPackage(win.winDefine.pkgPath, Laya.Handler.create(this, this.onLoaded, [win, param], false));
+                }
+                else {
+                    throw Error("要popup的弹窗的pkgPath和componentName不能为空");
+                }
+            }
+            else {
+                throw Error("要popup的弹窗的pkgInfo不能为空");
+            }
+        }
+        static async onLoaded(win, param) {
+            win.contentPane = fairygui.UIPackage.createObject(win.winDefine.pkgName, win.winDefine.componentName).asCom;
+            const showWin = () => {
+                if (win.closeOnClickOutSide)
+                    FWindow.root.showPopup(win);
+                else
+                    FWindow.root.showWindow(win);
+                win.center();
+                win.addRelation(FWindow.root, fairygui.RelationType.Center_Center);
+                win.addRelation(FWindow.root, fairygui.RelationType.Middle_Middle);
+                win.__onOpened(param);
+            };
+            win.beforeOpenNeedLoad().then(() => {
+                showWin();
+            }).catch(err => {
+                showWin();
+            });
+        }
+    }
+    LQ.FWindow = FWindow;
+})(LQ || (LQ = {}));
 //# sourceMappingURL=FScene.js.map
