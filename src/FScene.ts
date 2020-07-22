@@ -35,25 +35,21 @@ namespace LQ {
     }
 
     export interface IComponent {
-        closeBtn      : fairygui.GComponent
-        pkgPath?      : string
+        closeBtn: fairygui.GComponent
+        pkgPath?: string
         componentName?: string
-        name?         : string
-        classRef?     : Function
+        name?: string
+        classRef?: Function
         onOpened(data?: any, component?: fairygui.GComponent)
         close(type?: string)
         onClosed(type?: string)
     }
 
     export interface IDialog extends IComponent {
-        winDefine          : IWinDefine,
+        winDefine: IWinDefine,
         closeOnClickOutSide: boolean
     }
 
-
-    export interface IFScene extends IComponent {
-        fComponent: fgui.GComponent
-    }
     export interface ISceneResourcesLoad {
 
 
@@ -90,18 +86,18 @@ namespace LQ {
     }
 
     export interface IComponent {
-        closeBtn      : fairygui.GComponent
-        pkgPath?      : string
+        closeBtn: fairygui.GComponent
+        pkgPath?: string
         componentName?: string
-        name?         : string
-        classRef?     : Function
+        name?: string
+        classRef?: Function
         onOpened(data?: any, component?: fairygui.GComponent)
         close(type?: string)
         onClosed(type?: string)
     }
 
     export interface IDialog extends IComponent {
-        winDefine          : IWinDefine,
+        winDefine: IWinDefine,
         closeOnClickOutSide: boolean
     }
 
@@ -116,7 +112,7 @@ namespace LQ {
      *
      * @class FScene
      */
-    export class FScene extends Laya.Sprite implements IFScene, ISceneResourcesLoad {
+    export class FScene extends fgui.GComponent implements ISceneResourcesLoad {
 
 
         /**
@@ -129,7 +125,7 @@ namespace LQ {
         static root: Laya.Sprite;
 
         beforeOpenResources: any[] = []
-        afterOpenResources : any[] = []
+        afterOpenResources: any[] = []
         // sceneType: SceneType = SceneType.FairyGUIScene
 
         /**
@@ -139,9 +135,6 @@ namespace LQ {
          */
         sceneType = 2;
         layerName: string
-
-        //fairygui的场景容器
-        fComponent: fairygui.GComponent
 
         closeBtn: fairygui.GComponent
 
@@ -188,8 +181,8 @@ namespace LQ {
          * @type {{ [key: string]: fairygui.Controller }}
          * @memberof FScene
          */
-        cc       : { [key: string]: fairygui.Controller } = {}
-        name     : string
+        cc: { [key: string]: fairygui.Controller } = {}
+        name: string
         classRef?: Function
 
         static init(root: Laya.Sprite) {
@@ -197,14 +190,14 @@ namespace LQ {
         }
 
 
-        constructor(component: fgui.GComponent, reuse: boolean, reuseName: string) {
-            super()
-               this.reuse                             = reuse
-            if (this.reuse) this._autoDestroyAtClosed = false
-               this.fComponent                        = component
-            this.addChild(component.displayObject)
-            this.reuseName = reuseName
-            component.setSize(Laya.stage.width, Laya.stage.height)
+        afterConstructorCall(params?: any) {
+
+            this.reuse = params.reuse || false
+            if (this.reuse) {
+                this._autoDestroyAtClosed = false
+                this.reuseName = params.reuseName
+            }
+            this.setSize(Laya.stage.width, Laya.stage.height)
             this.bulidChildMap()
             this.buidControllerMap()
             this.onInit()
@@ -221,14 +214,14 @@ namespace LQ {
 
 
         public adjustUI() {
-            this.fComponent.setSize(this.width, this.height)
+            this.setSize(this.width, this.height)
         }
 
 
         public onInit() {
             //场景内某个组件命名为close，点击则自动关闭场景
-            if (this.fComponent.getChild("Btn_Close")) {
-                this.closeBtn = this.fComponent.getChild("Btn_Close").asButton
+            if (this.getChild("Btn_Close")) {
+                this.closeBtn = this.getChild("Btn_Close").asButton
                 this.closeBtn.onClick(this, () => {
                     this.__close(Laya.Dialog.CLOSE)
                 })
@@ -255,7 +248,7 @@ namespace LQ {
         protected __close(type?: string) {
             this.close(type)
             if (this.reuse) {
-                this.removeSelf()
+                this.removeFromParent()
                 //放入对象池回收
                 console.assert(this.reuseName != null, "wtf FScene重用标识符为空！")
                 Laya.Pool.recover(this.reuseName, this)
@@ -266,9 +259,9 @@ namespace LQ {
                 return
             }
             if (this.autoDestroyAtClosed) {
-                this.destroy()
+                this.dispose()
             } else {
-                this.removeSelf()
+                this.removeFromParent()
             }
             this.__onClosed(type)
         }
@@ -276,7 +269,7 @@ namespace LQ {
         close(type?: string) { }
 
         private __onClosed(type: string): void {
-            // this.fComponent.removeFromParent()
+            // this.removeFromParent()
             this.onClosed(type);
         }
 
@@ -339,25 +332,26 @@ namespace LQ {
 
             if (!scene) {
                 //对象池中找不到该对象 或不复用 则创建一个新的
-                let view: fairygui.GObject = fairygui.UIPackage.createObject(sceneCfg.pkgName, sceneCfg.componentName)
-                if (view) {
-                    let com: fgui.GComponent = view.asCom
-                        scene                = new sceneCfg.classRef(view, com, reuse, reuseName) as FScene
-                } else {
+                scene = fairygui.UIPackage.createObject(sceneCfg.pkgName, sceneCfg.componentName, sceneCfg.classRef) as FScene;
+                if (!scene) {
                     throw "找不到指定组件";
                 }
+                scene.afterConstructorCall({
+                    reuse    : reuse,
+                    reuseName: reuseName,
+                });
             }
             const showScene = () => {
-                FScene.root.addChild(scene)
+                FScene.root.addChild(scene.displayObject)
                 scene.__onOpened(param)
                 complete && complete.runWith(scene)
             }
 
             scene.beforeOpenNeedLoad().then(() => {
                 showScene()
-            }).catch(err =>
+            }).catch((err: Error) => {
                 showScene()
-            )
+            })
         }
 
         static loadPackage(sceneCfg: ISceneCfg, complete?: Laya.Handler, progress?: Laya.Handler) {
@@ -385,13 +379,13 @@ namespace LQ {
 
 
         private bulidChildMap(): void {
-            this.fComponent._children.forEach((child: fairygui.GComponent, index) => {
+            this._children.forEach((child: fairygui.GComponent, index) => {
                 this.children[child.name] = child
             })
         }
 
         private buidControllerMap(): void {
-            this.fComponent.controllers.forEach((cc: fairygui.Controller) => {
+            this.controllers.forEach((cc: fairygui.Controller) => {
                 this.cc[cc.name] = cc;
             })
         }
@@ -456,14 +450,14 @@ namespace LQ {
     /**
      * fgui弹窗
      */
-    export  class FWindow extends fairygui.Window {
-        static root               : fairygui.GRoot
-               beforeOpenResources: any[] = []
-               afterOpenResources : any[] = []
-               className          : String
+    export class FWindow extends fairygui.Window {
+        static root: fairygui.GRoot
+        beforeOpenResources: any[] = []
+        afterOpenResources: any[] = []
+        className: String
 
         layerName: string
-        closeBtn : fairygui.GComponent
+        closeBtn: fairygui.GComponent
 
         winDefine: IWinDefine
 
@@ -489,7 +483,7 @@ namespace LQ {
         static Init() {
             fairygui.UIConfig.modalLayerColor = "rgba(33,33,33,0.5)"
             // Laya.stage.on(Laya.Event.RESIZE, this , this.onStageResize)
-            FWindow.root                      = new fgui.GRoot()
+            FWindow.root = new fgui.GRoot()
             FWindow.root.displayObject.zOrder = 999
             FWindow.root.setSize(Laya.stage.width, Laya.stage.height)
             FWindow.root.displayObject.name = "FWindow弹窗层"
@@ -509,15 +503,15 @@ namespace LQ {
          * @memberof FWindow
          */
         closeOnClickOutSide: boolean = true;
-        pkgPath?           : string
-        componentName?     : string
+        pkgPath?: string
+        componentName?: string
 
 
 
         public onInit(): void {
             this.className = FWindow.name
             this.setPivot(0.5, 0.5)
-            this.modal               = true
+            this.modal = true
             this._displayObject.name = "FWindow"
         }
 
@@ -614,8 +608,8 @@ namespace LQ {
         }
 
         protected static async onLoaded(win: FWindow, param?: any) {
-                  win.contentPane = fairygui.UIPackage.createObject(win.winDefine.pkgName, win.winDefine.componentName).asCom
-            const showWin         = () => {
+            win.contentPane = fairygui.UIPackage.createObject(win.winDefine.pkgName, win.winDefine.componentName).asCom
+            const showWin = () => {
                 if (win.closeOnClickOutSide) FWindow.root.showPopup(win)
                 else FWindow.root.showWindow(win)
                 win.center()

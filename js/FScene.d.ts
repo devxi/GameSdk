@@ -41,9 +41,6 @@ declare namespace LQ {
         winDefine: IWinDefine;
         closeOnClickOutSide: boolean;
     }
-    interface IFScene extends IComponent {
-        fComponent: fgui.GComponent;
-    }
     interface ISceneResourcesLoad {
         /**
          *场景打开前需要预加载的资源列表
@@ -94,7 +91,7 @@ declare namespace LQ {
      *
      * @class FScene
      */
-    class FScene extends Laya.Sprite implements IFScene, ISceneResourcesLoad {
+    class FScene extends fgui.GComponent implements ISceneResourcesLoad {
         /**
          * 场景根容器
          *
@@ -112,7 +109,6 @@ declare namespace LQ {
          */
         sceneType: number;
         layerName: string;
-        fComponent: fairygui.GComponent;
         closeBtn: fairygui.GComponent;
         pkgPath: string;
         componentName: string;
@@ -158,7 +154,7 @@ declare namespace LQ {
         name: string;
         classRef?: Function;
         static init(root: Laya.Sprite): void;
-        constructor(component: fgui.GComponent, reuse: boolean, reuseName: string);
+        afterConstructorCall(params?: any): void;
         set autoDestroyAtClosed(value: boolean);
         get autoDestroyAtClosed(): boolean;
         adjustUI(): void;

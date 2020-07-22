@@ -5,9 +5,9 @@ var LQ;
      *
      * @class FScene
      */
-    class FScene extends Laya.Sprite {
-        constructor(component, reuse, reuseName) {
-            super();
+    class FScene extends fgui.GComponent {
+        constructor() {
+            super(...arguments);
             this.beforeOpenResources = [];
             this.afterOpenResources = [];
             // sceneType: SceneType = SceneType.FairyGUIScene
@@ -45,19 +45,20 @@ var LQ;
              * @memberof FScene
              */
             this.cc = {};
-            this.reuse = reuse;
-            if (this.reuse)
-                this._autoDestroyAtClosed = false;
-            this.fComponent = component;
-            this.addChild(component.displayObject);
-            this.reuseName = reuseName;
-            component.setSize(Laya.stage.width, Laya.stage.height);
-            this.bulidChildMap();
-            this.buidControllerMap();
-            this.onInit();
         }
         static init(root) {
             FScene.root = root;
+        }
+        afterConstructorCall(params) {
+            this.reuse = params.reuse || false;
+            if (this.reuse) {
+                this._autoDestroyAtClosed = false;
+                this.reuseName = params.reuseName;
+            }
+            this.setSize(Laya.stage.width, Laya.stage.height);
+            this.bulidChildMap();
+            this.buidControllerMap();
+            this.onInit();
         }
         set autoDestroyAtClosed(value) {
             if (this.reuse && value)
@@ -68,12 +69,12 @@ var LQ;
             return this._autoDestroyAtClosed;
         }
         adjustUI() {
-            this.fComponent.setSize(this.width, this.height);
+            this.setSize(this.width, this.height);
         }
         onInit() {
             //场景内某个组件命名为close，点击则自动关闭场景
-            if (this.fComponent.getChild("Btn_Close")) {
-                this.closeBtn = this.fComponent.getChild("Btn_Close").asButton;
+            if (this.getChild("Btn_Close")) {
+                this.closeBtn = this.getChild("Btn_Close").asButton;
                 this.closeBtn.onClick(this, () => {
                     this.__close(Laya.Dialog.CLOSE);
                 });
@@ -95,7 +96,7 @@ var LQ;
         __close(type) {
             this.close(type);
             if (this.reuse) {
-                this.removeSelf();
+                this.removeFromParent();
                 //放入对象池回收
                 console.assert(this.reuseName != null, "wtf FScene重用标识符为空！");
                 Laya.Pool.recover(this.reuseName, this);
@@ -106,16 +107,16 @@ var LQ;
                 return;
             }
             if (this.autoDestroyAtClosed) {
-                this.destroy();
+                this.dispose();
             }
             else {
-                this.removeSelf();
+                this.removeFromParent();
             }
             this.__onClosed(type);
         }
         close(type) { }
         __onClosed(type) {
-            // this.fComponent.removeFromParent()
+            // this.removeFromParent()
             this.onClosed(type);
         }
         onClosed(type) { }
@@ -173,23 +174,25 @@ var LQ;
             }
             if (!scene) {
                 //对象池中找不到该对象 或不复用 则创建一个新的
-                let view = fairygui.UIPackage.createObject(sceneCfg.pkgName, sceneCfg.componentName);
-                if (view) {
-                    let com = view.asCom;
-                    scene = new sceneCfg.classRef(view, com, reuse, reuseName);
-                }
-                else {
+                scene = fairygui.UIPackage.createObject(sceneCfg.pkgName, sceneCfg.componentName, sceneCfg.classRef);
+                if (!scene) {
                     throw "找不到指定组件";
                 }
+                scene.afterConstructorCall({
+                    reuse: reuse,
+                    reuseName: reuseName,
+                });
             }
             const showScene = () => {
-                FScene.root.addChild(scene);
+                FScene.root.addChild(scene.displayObject);
                 scene.__onOpened(param);
                 complete && complete.runWith(scene);
             };
             scene.beforeOpenNeedLoad().then(() => {
                 showScene();
-            }).catch(err => showScene());
+            }).catch((err) => {
+                showScene();
+            });
         }
         static loadPackage(sceneCfg, complete, progress) {
             fgui.UIPackage.loadPackage(sceneCfg.pkgPath, Laya.Handler.create(this, (success) => {
@@ -212,12 +215,12 @@ var LQ;
             return false;
         }
         bulidChildMap() {
-            this.fComponent._children.forEach((child, index) => {
+            this._children.forEach((child, index) => {
                 this.children[child.name] = child;
             });
         }
         buidControllerMap() {
-            this.fComponent.controllers.forEach((cc) => {
+            this.controllers.forEach((cc) => {
                 this.cc[cc.name] = cc;
             });
         }
