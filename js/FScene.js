@@ -55,6 +55,13 @@ var LQ;
         static set root(value) {
             FScene._root = value;
         }
+        /**
+         *
+         * 初始化FScene，使用前务必初始化
+         * @static
+         * @param {Laya.Sprite} root 场景根容器
+         * @memberof FScene
+         */
         static init(root) {
             FScene.root = root;
         }
@@ -162,7 +169,7 @@ var LQ;
             return new Promise((resolve, reject) => {
                 let handler = Laya.Handler.create(this, (scene) => {
                     if (scene) {
-                        complete.runWith(scene);
+                        complete && complete.runWith(scene);
                         return resolve(scene);
                     }
                     return reject("fscene加载失败");
@@ -432,4 +439,5 @@ var LQ;
     }
     LQ.FWindow = FWindow;
 })(LQ || (LQ = {}));
+window.LQ = window.LQ || LQ; //防止微信小游戏中，没有LQ对象
 //# sourceMappingURL=FScene.js.map

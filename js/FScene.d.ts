@@ -155,6 +155,13 @@ declare namespace LQ {
         classRef?: Function;
         static get root(): Laya.Sprite;
         static set root(value: Laya.Sprite);
+        /**
+         *
+         * 初始化FScene，使用前务必初始化
+         * @static
+         * @param {Laya.Sprite} root 场景根容器
+         * @memberof FScene
+         */
         static init(root: Laya.Sprite): void;
         afterConstructorCall(params?: any): void;
         set autoDestroyAtClosed(value: boolean);

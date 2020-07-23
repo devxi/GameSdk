@@ -196,6 +196,15 @@ namespace LQ {
             FScene._root = value;
         }
 
+
+
+        /**
+         *
+         * 初始化FScene，使用前务必初始化
+         * @static
+         * @param {Laya.Sprite} root 场景根容器 
+         * @memberof FScene
+         */
         static init(root: Laya.Sprite) {
             FScene.root = root;
         }
@@ -321,7 +330,7 @@ namespace LQ {
             return new Promise((resolve, reject) => {
                 let handler = Laya.Handler.create(this, (scene: FScene) => {
                     if (scene) {
-                        complete.runWith(scene);
+                        complete && complete.runWith(scene);
                         return resolve(scene);
                     }
                     return reject("fscene加载失败");
@@ -491,6 +500,7 @@ namespace LQ {
          */
         cc: { [key: string]: fairygui.Controller } = {}
 
+        
         static Init() {
             fairygui.UIConfig.modalLayerColor = "rgba(33,33,33,0.5)"
             // Laya.stage.on(Laya.Event.RESIZE, this , this.onStageResize)
@@ -637,6 +647,8 @@ namespace LQ {
         }
     }
 }
+
+window.LQ = window.LQ || LQ;//防止微信小游戏中，没有LQ对象
 
 
 
