@@ -500,7 +500,7 @@ namespace LQ {
          */
         cc: { [key: string]: fairygui.Controller } = {}
 
-        
+
         static Init() {
             fairygui.UIConfig.modalLayerColor = "rgba(33,33,33,0.5)"
             // Laya.stage.on(Laya.Event.RESIZE, this , this.onStageResize)
@@ -646,6 +646,63 @@ namespace LQ {
             })
         }
     }
+}
+
+namespace LQ {
+    /**
+     * 包接口
+     *
+     * @interface IPackage
+     */
+    export interface IPackageDefine  {
+
+        /** 
+         * 备注名 随意
+         *
+         * @type {string}
+         * @memberof IPackage
+         */
+        name: string,
+
+        /**
+         * 包名 需要和fairygui 里面导出的包名一致 如"ActivityPackage(活动)"
+         *
+         * @type {string}
+         * @memberof IPackage
+         */
+        pkgName: string,
+
+        /**
+         * 包路径 如 "res/UIPackage/Activity/ActivityPackage"
+         *
+         * @type {string}
+         * @memberof IPackage
+         */
+        pkgPath: string
+    }
+
+    export interface IFSceneDefine extends IPackageDefine  {
+
+        /**
+         * 组件名 如"UIPanel_MatchHall"
+         *
+         * @type {string}
+         * @memberof IFScene
+         */
+        componentName: string,
+
+        /**
+         *
+         * FScene的类引用 用于实例化FScene类  需要填FScene类及其子类
+         * @type {TestFScene}
+         * @memberof IFScene
+         */
+        classRef: new () => any;
+    }
+
+
+    export let PkgDefine: { [key: string]: IPackageDefine } = {};
+    export let FSceneDefine: { [key: string]: IFSceneDefine } = {};
 }
 
 window.LQ = window.LQ || LQ;//防止微信小游戏中，没有LQ对象

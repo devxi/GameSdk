@@ -439,5 +439,9 @@ var LQ;
     }
     LQ.FWindow = FWindow;
 })(LQ || (LQ = {}));
+(function (LQ) {
+    LQ.PkgDefine = {};
+    LQ.FSceneDefine = {};
+})(LQ || (LQ = {}));
 window.LQ = window.LQ || LQ; //防止微信小游戏中，没有LQ对象
 //# sourceMappingURL=FScene.js.map
