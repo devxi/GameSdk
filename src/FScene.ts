@@ -122,7 +122,7 @@ namespace LQ {
          * @type {Laya.Sprite}
          * @memberof FScene
          */
-        static root: Laya.Sprite;
+        private static _root: Laya.Sprite;
 
         beforeOpenResources: any[] = []
         afterOpenResources: any[] = []
@@ -184,6 +184,17 @@ namespace LQ {
         cc: { [key: string]: fairygui.Controller } = {}
         name: string
         classRef?: Function
+
+        static get root(): Laya.Sprite {
+            if (!FScene._root) {
+                throw "请初始化FScene,设置场景根容器，设置方法为：FScene.init(根容器)";
+            }
+            return FScene._root;
+        }
+
+        static set root(value: Laya.Sprite) {
+            FScene._root = value;
+        }
 
         static init(root: Laya.Sprite) {
             FScene.root = root;
@@ -337,7 +348,7 @@ namespace LQ {
                     throw "找不到指定组件";
                 }
                 scene.afterConstructorCall({
-                    reuse    : reuse,
+                    reuse: reuse,
                     reuseName: reuseName,
                 });
             }

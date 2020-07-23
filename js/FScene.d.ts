@@ -99,7 +99,7 @@ declare namespace LQ {
          * @type {Laya.Sprite}
          * @memberof FScene
          */
-        static root: Laya.Sprite;
+        private static _root;
         beforeOpenResources: any[];
         afterOpenResources: any[];
         /**
@@ -153,6 +153,8 @@ declare namespace LQ {
         };
         name: string;
         classRef?: Function;
+        static get root(): Laya.Sprite;
+        static set root(value: Laya.Sprite);
         static init(root: Laya.Sprite): void;
         afterConstructorCall(params?: any): void;
         set autoDestroyAtClosed(value: boolean);

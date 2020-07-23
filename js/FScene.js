@@ -46,6 +46,15 @@ var LQ;
              */
             this.cc = {};
         }
+        static get root() {
+            if (!FScene._root) {
+                throw "请初始化FScene,设置场景根容器，设置方法为：FScene.init(根容器)";
+            }
+            return FScene._root;
+        }
+        static set root(value) {
+            FScene._root = value;
+        }
         static init(root) {
             FScene.root = root;
         }
