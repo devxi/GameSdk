@@ -19,6 +19,6 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
-    "jszip": "^3.5.0"
+    "jszip": "^3.7.0"
   }
 }
